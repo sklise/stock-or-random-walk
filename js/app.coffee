@@ -20,20 +20,23 @@ perlin = new toxi.math.noise.PerlinNoise()
 
 @previous_array_element = (array, index) ->
   if index > 0
-    array[0]
+    array[index-1]
   else
     false
 
-@walk = (i) ->
-  r = perlin.noise(i)
-  console.log r
-  r
+# Enter a coef between 0 and 1 and generates a function that returns a boolean skewed
+@skew = (coef) ->
+  -> Math.random() > coef
 
-@get_random_walk = (length, callback) ->
+# Perlin noise not just random
+@walk = (i) -> perlin.noise(i)
+
+@get_random_walk = (length, skew_coef, callback) ->
+  s = skew(skew_coef)
   result = []
   _.times length, (i) ->
     prev = previous_array_element(result, i) || [-1,0]
-    result.push [i, prev[1]+walk(i)]
+    result.push [i, prev[1] + (if s() then 1 else -1) * walk(i)]
   callback(result)
 
 @draw_graph = (el, data, chart) ->
@@ -50,7 +53,7 @@ perlin = new toxi.math.noise.PerlinNoise()
   graph.append("svg:path").attr("d", @chart_line(data))
 
 $ ->
-  get_stock "FB", (res) -> draw_graph("#canvas-container", res.data, chart)
-  get_stock "AAPL", (res) -> draw_graph("#stock2", res.data, chart)
-  get_random_walk 365, (data) ->
-    draw_graph("#stock3", data, chart)
+  get_stock "FB", (res) -> draw_graph("#stock1", res.data, chart)
+  get_stock "QCOM", (res) -> draw_graph("#stock2", res.data, chart)
+  get_random_walk 365, .7, (data) -> draw_graph("#stock3", data, chart)
+  get_random_walk 365, .48, (data) -> draw_graph("#stock4", data, chart)
